@@ -1,0 +1,10 @@
+#version 150
+
+in vec4 pos;
+
+out vec4 fragColor;
+
+void main()
+{
+    fragColor = vec4(abs(pos.x), abs(pos.y), 1.0, 0.0);
+}
