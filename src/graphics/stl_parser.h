@@ -7,13 +7,12 @@
 #pragma clang diagnostic pop
 #include <vector>
 #include <array>
+#include <glm/glm.hpp>
 
 struct STLFacet_t
 {
-    GLfloat normal[3];
-    GLfloat vertex1[3];
-    GLfloat vertex2[3];
-    GLfloat vertex3[3];
+    glm::vec3 normal;
+    glm::vec3 vertices[3];
     Uint16 data;
 };
 
@@ -26,8 +25,8 @@ struct STLSolid_t
 bool ParseSTLFile(const char* filename, std::vector<STLSolid_t> &solids);
 
 bool ConvertSolidToNormalVertexElements(STLSolid_t &solid,
-        std::vector<std::array<GLfloat, 3> > &normals,
-        std::vector<std::array<GLfloat, 3> > &vertices,
+        std::vector<glm::vec3> &normals,
+        std::vector<glm::vec3> &vertices,
         std::vector<int> &elements);
 
 #endif

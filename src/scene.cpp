@@ -1,6 +1,7 @@
 #include "scene.h"
 #include <vector>
 #include <array>
+#include <glm/glm.hpp>
 #include <GL/glew.h>
 #include "graphics/shader_program.h"
 #include "util/log.h"
@@ -63,10 +64,10 @@ static bool CreateBoardShaderProgram()
     return true;
 }
 
-static bool CreateModelShaderProgram(std::vector<std::array<GLfloat, 3> > &vertices,
-        std::vector<int> &elements, std::vector<std::array<GLfloat, 3> > &normals)
+static bool CreateModelShaderProgram(std::vector<glm::vec3> &vertices,
+        std::vector<int> &elements, std::vector<glm::vec3> &normals)
 {
-    
+    return true;
 }
 
 static bool ParseSTLModel(const char* filename, std::vector<STLSolid_t> &solids)
@@ -107,8 +108,8 @@ bool SceneInit()
     }
 
     for (int i=0; i<allSolids.size(); i++) {
-        std::vector<std::array<GLfloat, 3> > normals;
-        std::vector<std::array<GLfloat, 3> > vertices;
+        std::vector<glm::vec3> normals;
+        std::vector<glm::vec3> vertices;
         std::vector<int> elements;
         ConvertSolidToNormalVertexElements(allSolids[i], normals, vertices,
                 elements);

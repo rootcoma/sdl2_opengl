@@ -28,12 +28,13 @@ precisely this kind of scenario)
 //       files
 #define STL_FACET_SIZE 0x32
 
-static bool ReadVec3FromString(std::string &str, GLfloat *vec)
+static bool ReadVec3FromString(std::string &str, glm::vec3 &vec)
 {
     //Success("vec3 string '%s'", str.c_str());
     // split the string into 3 floats
     std::istringstream vectorStringStream(str);
     std::string valueStr;
+    float vals[3] = { 0.0f, 0.0f, 0.0f, };
     for (int i=0; i<3; i++) {
         do {
             if (!std::getline(vectorStringStream, valueStr, ' ')) {
@@ -43,16 +44,16 @@ static bool ReadVec3FromString(std::string &str, GLfloat *vec)
         } while (valueStr[0] == '\0');
         try {
             trim(valueStr);
-            GLfloat val = (GLfloat)std::stof(valueStr);
-            //Debug("val: %f", val);
-            vec[i] = val;
+            vals[i] = std::stof(valueStr);
+            //Debug("vals[i]: %f", vals[i]);
         } catch (...) { // invalid_argument or out_of_range
             Warning("Failed to convert '%s' to a float in line '%s'",
                     valueStr.c_str(), str.c_str());
             return false;
         }
     }
-    //Success("Read a vector 3!");
+    vec = glm::vec3(vals[0], vals[1], vals[2]);
+    //Success("Read a vector 3! (%f, %f, %f)", vec.x, vec.y, vec.z);
     return true;
 }
 
@@ -84,7 +85,7 @@ bool ParseSTLAscii(std::string &str, std::vector<STLSolid_t> &solids)
             currentSolid.facets.push_back(currentFacet);
             currentVertexIndex = 0;
             normalRead = false;
-            memset(&currentFacet, 0, sizeof(STL_FACET_SIZE));
+            memset(&currentFacet, 0, STL_FACET_SIZE);
             currentFacet.data = 0;
         } else if (line.find("endsolid") != std::string::npos) {
             solids.push_back(currentSolid);
@@ -129,12 +130,11 @@ bool ParseSTLAscii(std::string &str, std::vector<STLSolid_t> &solids)
             }
             line = line.substr(skip+6);
             trim(line); // lstrip and rstrip
-            GLfloat *targets[] = {currentFacet.vertex1, 
-                    currentFacet.vertex2, currentFacet.vertex3,};
-            GLfloat *target = targets[currentVertexIndex++];
-            if (!ReadVec3FromString(line, target)) {
+
+            if (!ReadVec3FromString(line, currentFacet.vertices[currentVertexIndex])) {
                 return false;
             }
+            currentVertexIndex++;
         } else {
             Debug("Skipped line in ascii STL file '%s'", line.c_str());
         }
@@ -147,6 +147,13 @@ struct internalSTLSolid_t
 {
     Uint8 header[80];
     Uint32 numFacets;
+};
+
+struct internalSTLFacet_t
+{
+    float normal[3];
+    float vertices[3][3];
+    Uint16 data;
 };
 
 // UINT8[80] - Header (must not begin with "solid")
@@ -180,12 +187,20 @@ bool ParseSTLBinary(std::string &str, std::vector<STLSolid_t> &solids)
             return false;
         }
         //Debug("Solid has %ld Facets.", stlHeader->numFacets);
-        STLFacet_t *facets = (STLFacet_t *)&str[offset];
+        internalSTLFacet_t *facets = (internalSTLFacet_t *)&str[offset];
         for (int i=0; i<stlHeader->numFacets; i++) {
-            solid.facets.push_back(facets[0]);
+            STLFacet_t tmpFacet;
+            tmpFacet.normal = glm::vec3(facets[0].normal[0],
+                    facets[0].normal[1], facets[0].normal[2]);
+            for (int j=0; j<3; j++) {
+                tmpFacet.vertices[j] = glm::vec3(facets[0].vertices[j][0],
+                        facets[0].vertices[j][1], facets[0].vertices[j][2]);
+            }
+            tmpFacet.data = 0;
+            solid.facets.push_back(tmpFacet);
             //Debug("Added facet size: %d", solid.facets.size());
             offset += STL_FACET_SIZE;
-            facets = (STLFacet_t *)&str[offset];
+            facets = (internalSTLFacet_t *)&str[offset];
         }
         solids.push_back(solid);
     } while (totalSize - offset > sizeof(STLSolid_t));
@@ -206,6 +221,10 @@ bool ParseSTLFile(const char *filename, std::vector<STLSolid_t> &solids)
         return false;
     }
     
+    // Get the first 32 chars, trim whilespace, then see if file is ascii
+    // by checking for the magic string 'solid'. 32 is arbitrary and
+    // is a design choice to consider stl files with extranious whitespace
+    // are not valid
     if (trim_copy(target.substr(0, 32)).compare(0, 5, "solid") == 0) {
         Info("Parsing Ascii STL file '%s'", filename);
         return ParseSTLAscii(target, solids);
@@ -214,49 +233,34 @@ bool ParseSTLFile(const char *filename, std::vector<STLSolid_t> &solids)
     return ParseSTLBinary(target, solids);
 }
 
-static bool CompareNormalVertexToExisting(GLfloat *norm, GLfloat *vert,
-        std::vector<std::array<GLfloat, 3> > &normals,
-        std::vector<std::array<GLfloat, 3> > &vertices)
+static bool CompareNormalVertexToExisting(glm::vec3 &norm, glm::vec3 &vert,
+        std::vector<glm::vec3> &normals,
+        std::vector<glm::vec3> &vertices)
 {
     for (int i=0; i<normals.size(); i++) {
-        if (memcmp((void *)norm, (void *)&normals[i][0],
-                sizeof(GLfloat)*3)) {
+        if (!glm::all(glm::equal(norm, normals[i]))) {
             continue;
         }
-        for (int j=0; j<3; j++) {
-            if (!memcmp((void *)vert, (void *)&vertices[i][0],
-                    sizeof(GLfloat)*3)) {
-                return true;
-            }
+        if (glm::all(glm::equal(vert, vertices[i]))) {
+            return true;
         }
     }
     return false;
 }
 
 bool ConvertSolidToNormalVertexElements(STLSolid_t &solid,
-        std::vector<std::array<GLfloat, 3> > &normals,
-        std::vector<std::array<GLfloat, 3> > &vertices,
+        std::vector<glm::vec3> &normals, std::vector<glm::vec3> &vertices,
         std::vector<int> &elements)
 {
-    if (normals.size() != vertices.size()) {
-        Error("Cannot compare facet with uneven vectors");
-        return false;
-    }
     int numElements = 0;
     for (int i=0; i<solid.facets.size(); i++) {
-        GLfloat *targets[] = {solid.facets[i].vertex1, 
-                solid.facets[i].vertex2, solid.facets[i].vertex3,};
         for (int j=0; j<3; j++) {
             bool match = CompareNormalVertexToExisting(solid.facets[i].normal,
-                    targets[j], normals, vertices);
+                    solid.facets[i].vertices[j], normals, vertices);
             if (!match) {
                 elements.push_back(numElements++);
-                std::array<GLfloat, 3> tmpNorm;
-                memcpy(&tmpNorm[0], solid.facets[i].normal, 3*sizeof(GLfloat));
-                normals.push_back(tmpNorm);
-                std::array<GLfloat, 3> tmpVert;
-                memcpy(&tmpVert[0], targets[j], 3*sizeof(GLfloat));
-                vertices.push_back(tmpVert);
+                normals.push_back(solid.facets[i].normal);
+                vertices.push_back(solid.facets[i].vertices[j]);
                 continue;
             }
             elements.push_back((i*3)+j);
