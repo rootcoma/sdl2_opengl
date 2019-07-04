@@ -5,6 +5,7 @@
 #include "util/strtrim.h"
 
 /*
+notes from the sah-gey:
 i strongly recommend using std::string_view here in place of strings/streams.
 taking input as a std::string_view (passed by value) allows both std::strings and
 string literals to be passed with minimal overhead (taking a std::string& can result
@@ -211,6 +212,8 @@ bool ParseSTLBinary(std::string &str, std::vector<STLSolid_t> &solids)
 bool ParseSTLFile(const char *filename, std::vector<STLSolid_t> &solids)
 {
     std::string target;
+    // Enhancement: loop through file while it is open, instead of
+    //              reading the entire file into a string
     Sint64 len = ReadFile(filename, target);
     if (len <= 0) {
         Error("Failed to open STL file '%s'", filename);
@@ -220,7 +223,6 @@ bool ParseSTLFile(const char *filename, std::vector<STLSolid_t> &solids)
         Error("Malformed STL file '%s' is too small", filename);
         return false;
     }
-    
     // Get the first 32 chars, trim whilespace, then see if file is ascii
     // by checking for the magic string 'solid'. 32 is arbitrary and
     // is a design choice to consider stl files with extranious whitespace
@@ -233,37 +235,36 @@ bool ParseSTLFile(const char *filename, std::vector<STLSolid_t> &solids)
     return ParseSTLBinary(target, solids);
 }
 
-// static bool CompareNormalVertexToExisting(glm::vec3 &norm, glm::vec3 &vert,
-//         std::vector<glm::vec3> &normals,
-//         std::vector<glm::vec3> &vertices)
-// {
-//     for (int i=0; i<normals.size(); i++) {
-//         if (!glm::all(glm::equal(norm, normals[i]))) {
-//             continue;
-//         }
-//         if (glm::all(glm::equal(vert, vertices[i]))) {
-//             return true;
-//         }
-//     }
-//     return false;
-// }
+static int CompareNormalVertexToExisting(glm::vec3 &norm, glm::vec3 &vert,
+        std::vector<glm::vec3> &normals,
+        std::vector<glm::vec3> &vertices)
+{
+    for (int i=0; i<normals.size(); i++) {
+        if (!glm::all(glm::equal(norm, normals[i]))) {
+            continue;
+        }
+        if (glm::all(glm::equal(vert, vertices[i]))) {
+            return i;
+        }
+    }
+    return -1;
+}
 
 bool ConvertSolidToNormalVertexElements(STLSolid_t &solid,
         std::vector<glm::vec3> &normals, std::vector<glm::vec3> &vertices,
-        std::vector<unsigned short> &elements)
+        std::vector<GLuint> &elements)
 {
-    unsigned short numElements = 0;
     for (int i=0; i<solid.facets.size(); i++) {
         for (int j=0; j<3; j++) {
-            // bool match = CompareNormalVertexToExisting(solid.facets[i].normal,
-            //        solid.facets[i].vertices[j], normals, vertices);
-            // if (!match) {
-                elements.push_back(numElements++);
+            int match = CompareNormalVertexToExisting(solid.facets[i].normal,
+                   solid.facets[i].vertices[j], normals, vertices);
+            if (match < 0) {
+                elements.push_back(normals.size());
                 normals.push_back(solid.facets[i].normal);
                 vertices.push_back(solid.facets[i].vertices[j]);
                 continue;
-            // }
-            elements.push_back((unsigned short)(i*3)+j);
+            }
+            elements.push_back((GLuint)match);
         }
     }
     return true;

@@ -18,16 +18,20 @@ static const GLfloat fullscreenVertices[] = {
      1.0f,  1.0f, -1.0f, // top right
 };
 
-static const GLushort fullscreenElements[] = {
+static const GLuint fullscreenElements[] = {
     0, 1, 2, 2, 1, 3,
 };
 
 static const char *models[] = {
-        //"models/cube.stl",
-        "models/space_invader_magnet.stl",
         //"models/block100.stl",
         //"models/bottle.stl",
+        //"models/cube.stl",
         //"models/humanoid.stl",
+        //"models/liver.stl",
+        //"models/magnolia.stl",
+        "models/space_invader_magnet.stl",
+        //"models/sphere.stl",
+        //"models/tiler_3d.stl",
 };
 
 static std::vector<ShaderProgram> shaderPrograms;
@@ -35,12 +39,12 @@ static std::vector<ShaderProgram> shaderPrograms;
 static std::vector<STLSolid_t> allSolids;
 
 static glm::mat4 viewMatrix = glm::lookAt(
-        glm::vec3(0, 0, -50),
+        glm::vec3(-10, 10, -70),
         glm::vec3(0, 0, 0),
         glm::vec3(0, 1, 0)
     );
 
-static glm::mat4 projectionMatrix = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, 0.1f, 150.0f);
+static glm::mat4 projectionMatrix = glm::ortho(-40.0f, 40.0f, -40.0f, 40.0f, 0.0f, 300.0f);
 
 static glm::mat4 modelMatrix = glm::mat4(1.0f);
 
@@ -81,7 +85,7 @@ static bool CreateBoardShaderProgram()
 }
 
 static bool CreateModelShaderProgram(const char *name,
-        std::vector<glm::vec3> &vertices, std::vector<unsigned short> &elements,
+        std::vector<glm::vec3> &vertices, std::vector<GLuint> &elements,
         std::vector<glm::vec3> &normals)
 {
     shaderPrograms.push_back(ShaderProgram(name));
@@ -103,7 +107,7 @@ static bool CreateModelShaderProgram(const char *name,
     shader->SetNormalBuffer((void *)&normals[0], sizeof(GLfloat)*numFloats,
             GL_STATIC_DRAW);
     shader->SetElementBuffer(elements.size(), (void *)&elements[0],
-            sizeof(unsigned short)*elements.size(), GL_STATIC_DRAW);
+            sizeof(GLuint)*elements.size(), GL_STATIC_DRAW);
     shader->SetViewMatrix(viewMatrix);
     shader->SetModelMatrix(modelMatrix);
     shader->SetProjectionMatrix(projectionMatrix);
@@ -151,12 +155,14 @@ bool SceneInit()
     for (int i=0; i<allSolids.size(); i++) {
         std::vector<glm::vec3> normals;
         std::vector<glm::vec3> vertices;
-        std::vector<unsigned short> elements;
+        std::vector<GLuint> elements;
         ConvertSolidToNormalVertexElements(allSolids[i], normals, vertices,
                 elements);
         Debug("normals.size(): %lu, vertices.size(): %lu, elements.size(): %lu",
                 normals.size(), vertices.size(), elements.size());
-        CreateModelShaderProgram("test", vertices, elements, normals);
+        if (!CreateModelShaderProgram("test", vertices, elements, normals)) {
+            return false;
+        }
     }
 
     return true;

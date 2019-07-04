@@ -11,5 +11,10 @@ out vec4 fragColor;
 
 void main()
 {
-    fragColor = vec4(pos.x, pos.y, pos.z, 1.0);
+    vec3 lightpos = vec3(10.0f, -10.0f, -27.0f);
+    float d = dot(normalize(lightpos), normalize(normal));
+    if (d <= 0.0) {
+        d = 0.4;
+    }
+    fragColor = vec4(pos.y, pos.x, pos.z*cos(d), 1.0);
 }

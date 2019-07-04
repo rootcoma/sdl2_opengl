@@ -121,7 +121,7 @@ void ShaderProgram::Render()
             glGetAttribLocationARB(m_program, "normal"));
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBuffer);
-    glDrawElements(GL_TRIANGLES, m_numElements, GL_UNSIGNED_SHORT, (void *)0);
+    glDrawElements(GL_TRIANGLES, m_numElements, GL_UNSIGNED_INT, (void *)0);
     GLint matUniform = glGetUniformLocationARB(m_program, "model");
     if (matUniform > -1) {
         glUniformMatrix4fv(matUniform, 1, GL_FALSE,

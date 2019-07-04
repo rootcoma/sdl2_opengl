@@ -27,6 +27,6 @@ bool ParseSTLFile(const char* filename, std::vector<STLSolid_t> &solids);
 bool ConvertSolidToNormalVertexElements(STLSolid_t &solid,
         std::vector<glm::vec3> &normals,
         std::vector<glm::vec3> &vertices,
-        std::vector<unsigned short> &elements);
+        std::vector<GLuint> &elements);
 
 #endif
