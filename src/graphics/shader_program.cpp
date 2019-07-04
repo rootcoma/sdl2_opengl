@@ -1,5 +1,7 @@
 #include "shader_program.h"
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 #include "util/glutil.h"
 #include "util/file.h"
 
@@ -35,6 +37,12 @@ void ShaderProgram::SetElementBuffer(int num, void *data, GLsizei size, GLenum s
     glDeleteBuffers(1, &m_elementBuffer);
     m_numElements = num;
     m_elementBuffer = CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, data, size, storageHint);
+}
+
+void ShaderProgram::SetNormalBuffer(void *data, GLsizei size, GLenum storageHint)
+{
+    glDeleteBuffers(1, &m_normalBuffer);
+    m_normalBuffer = CreateBuffer(GL_ARRAY_BUFFER, data, size, storageHint);
 }
 
 void ShaderProgram::SetViewMatrix(glm::mat4 &view)
@@ -104,6 +112,14 @@ void ShaderProgram::Render()
             3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*3, (void *)0);
     glEnableVertexAttribArrayARB(
             glGetAttribLocationARB(m_program, "verts"));
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
+    glVertexAttribPointerARB(
+            glGetAttribLocationARB(m_program, "normal"),
+            3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*3, (void *)0);
+    glEnableVertexAttribArrayARB(
+            glGetAttribLocationARB(m_program, "normal"));
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBuffer);
     glDrawElements(GL_TRIANGLES, m_numElements, GL_UNSIGNED_SHORT, (void *)0);
     GLint matUniform = glGetUniformLocationARB(m_program, "model");
@@ -126,6 +142,7 @@ void ShaderProgram::Render()
 ShaderProgram::~ShaderProgram()
 {
     Cleanup();
+    //Debug("Cleaned up shader '%s'", m_name.c_str());
 }
 
 void ShaderProgram::Cleanup()
@@ -140,5 +157,4 @@ void ShaderProgram::Cleanup()
     m_vertexBuffer = 0;
     glDeleteBuffers(1, &m_elementBuffer);
     m_elementBuffer = 0;
-    Success("Cleaned up shader '%s'", m_name.c_str());
 }

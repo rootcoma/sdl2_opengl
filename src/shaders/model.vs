@@ -5,12 +5,12 @@ uniform mat4 view;
 uniform mat4 projection;
 
 in vec3 verts;
-in vec3 normal;
+varying vec3 normal;
 
 out vec4 pos;
 
 void main()
 {
-    pos = vec4(verts, 1.0);
-    gl_Position = projection * view * model * pos;
+    pos = projection * view * model * vec4(verts, 1.0);
+    gl_Position = pos;
 }

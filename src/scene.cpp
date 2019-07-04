@@ -1,7 +1,11 @@
 #include "scene.h"
 #include <vector>
 #include <array>
+#include <memory>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 #include <GL/glew.h>
 #include "graphics/shader_program.h"
 #include "util/log.h"
@@ -19,30 +23,40 @@ static const GLushort fullscreenElements[] = {
 };
 
 static const char *models[] = {
-        "models/cube.stl",
+        //"models/cube.stl",
         "models/space_invader_magnet.stl",
-        "models/block100.stl",
-        "models/bottle.stl",
-        "models/humanoid.stl",
+        //"models/block100.stl",
+        //"models/bottle.stl",
+        //"models/humanoid.stl",
 };
 
-static ShaderProgram shaderFullscreen = ShaderProgram("background");
-
-static ShaderProgram shaderBoard = ShaderProgram("board");
+static std::vector<ShaderProgram> shaderPrograms;
 
 static std::vector<STLSolid_t> allSolids;
 
+static glm::mat4 viewMatrix = glm::lookAt(
+        glm::vec3(0, 0, -50),
+        glm::vec3(0, 0, 0),
+        glm::vec3(0, 1, 0)
+    );
+
+static glm::mat4 projectionMatrix = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, 0.1f, 150.0f);
+
+static glm::mat4 modelMatrix = glm::mat4(1.0f);
+
 static bool CreateFullscreenShaderProgram()
 {
-    if (!shaderFullscreen.LoadFragmentShaderFromFile("shaders/background.frs")) {
+    shaderPrograms.push_back(ShaderProgram("background"));
+    ShaderProgram *shader = &shaderPrograms[shaderPrograms.size()-1];
+    if (!shader->LoadFragmentShaderFromFile("shaders/background.frs")) {
         return false;
     }
-    if (!shaderFullscreen.LoadVertexShaderFromFile("shaders/background.vs")) {
+    if (!shader->LoadVertexShaderFromFile("shaders/background.vs")) {
         return false;
     }
-    shaderFullscreen.SetVertexBuffer((void *)fullscreenVertices,
+    shader->SetVertexBuffer((void *)fullscreenVertices,
             sizeof(fullscreenVertices), GL_STATIC_DRAW);
-    shaderFullscreen.SetElementBuffer(6, (void *)fullscreenElements,
+    shader->SetElementBuffer(6, (void *)fullscreenElements,
             sizeof(fullscreenElements), GL_STATIC_DRAW);
     Debug("Set up fullscreen shader object");
     return true;
@@ -50,23 +64,50 @@ static bool CreateFullscreenShaderProgram()
 
 static bool CreateBoardShaderProgram()
 {
-    if (!shaderBoard.LoadFragmentShaderFromFile("shaders/board.frs")) {
+    shaderPrograms.push_back(ShaderProgram("board"));
+    ShaderProgram *shader = &shaderPrograms[shaderPrograms.size()-1];
+    if (!shader->LoadFragmentShaderFromFile("shaders/board.frs")) {
         return false;
     }
-    if (!shaderBoard.LoadVertexShaderFromFile("shaders/board.vs")) {
+    if (!shader->LoadVertexShaderFromFile("shaders/board.vs")) {
         return false;
     }
-    shaderBoard.SetVertexBuffer((void *)fullscreenVertices,
+    shader->SetVertexBuffer((void *)fullscreenVertices,
             sizeof(fullscreenVertices), GL_STATIC_DRAW);
-    shaderBoard.SetElementBuffer(6, (void *)fullscreenElements,
+    shader->SetElementBuffer(6, (void *)fullscreenElements,
             sizeof(fullscreenElements), GL_STATIC_DRAW);
     Debug("Set up board shader program");
     return true;
 }
 
-static bool CreateModelShaderProgram(std::vector<glm::vec3> &vertices,
-        std::vector<int> &elements, std::vector<glm::vec3> &normals)
+static bool CreateModelShaderProgram(const char *name,
+        std::vector<glm::vec3> &vertices, std::vector<unsigned short> &elements,
+        std::vector<glm::vec3> &normals)
 {
+    shaderPrograms.push_back(ShaderProgram(name));
+    ShaderProgram *shader = &shaderPrograms[shaderPrograms.size()-1];
+    if (!shader->LoadFragmentShaderFromFile("shaders/model.frs")) {
+        return false;
+    }
+    if (!shader->LoadVertexShaderFromFile("shaders/model.vs")) {
+        return false;
+    }
+    if (vertices.size() != normals.size()) {
+        Warning("vertices.size() != normals.size(): (%d, %d)",
+                vertices.size(), normals.size());
+        return false;
+    }
+    size_t numFloats = vertices.size() * 3;
+    shader->SetVertexBuffer((void *)&vertices[0], sizeof(GLfloat)*numFloats,
+            GL_STATIC_DRAW);
+    shader->SetNormalBuffer((void *)&normals[0], sizeof(GLfloat)*numFloats,
+            GL_STATIC_DRAW);
+    shader->SetElementBuffer(elements.size(), (void *)&elements[0],
+            sizeof(unsigned short)*elements.size(), GL_STATIC_DRAW);
+    shader->SetViewMatrix(viewMatrix);
+    shader->SetModelMatrix(modelMatrix);
+    shader->SetProjectionMatrix(projectionMatrix);
+    Debug("Set up shader '%s'", name);
     return true;
 }
 
@@ -77,19 +118,20 @@ static bool ParseSTLModel(const char* filename, std::vector<STLSolid_t> &solids)
         Error("Failed to parse STL file '%s'", filename);
         return false;
     }
-    Debug("Parsed model '%s' successfully, total models: %d", filename, solids.size());
+    //Debug("Parsed model '%s' successfully, total models: %d", filename, solids.size());
     if (solids.size() <= 0) {
         return ret;
     }
-    Debug("Number of facets in solids[%d]: %lu", solids.size()-1,
-            solids[solids.size()-1].facets.size());
+    //Debug("Number of facets in solids[%d]: %lu", solids.size()-1,
+    //        solids[solids.size()-1].facets.size());
     return ret;  
 }
 
 void SceneRender()
 {
-    shaderFullscreen.Render();
-    shaderBoard.Render();
+    for (auto it=shaderPrograms.begin(); it!=shaderPrograms.end(); it++) {
+        it->Render();
+    }
 }
 
 bool SceneInit()
@@ -106,16 +148,15 @@ bool SceneInit()
             return false;
         }
     }
-
     for (int i=0; i<allSolids.size(); i++) {
         std::vector<glm::vec3> normals;
         std::vector<glm::vec3> vertices;
-        std::vector<int> elements;
+        std::vector<unsigned short> elements;
         ConvertSolidToNormalVertexElements(allSolids[i], normals, vertices,
                 elements);
         Debug("normals.size(): %lu, vertices.size(): %lu, elements.size(): %lu",
                 normals.size(), vertices.size(), elements.size());
-        CreateModelShaderProgram(vertices, elements, normals);
+        CreateModelShaderProgram("test", vertices, elements, normals);
     }
 
     return true;

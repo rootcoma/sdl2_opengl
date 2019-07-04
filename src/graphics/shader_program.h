@@ -11,6 +11,8 @@ public:
 
     void SetVertexBuffer(void *data, GLsizei size, GLenum storageHint);
 
+    void SetNormalBuffer(void *data, GLsizei size, GLenum storageHint);
+
     void SetElementBuffer(int numElements, void *data,
             GLsizei size, GLenum storageHint);
 
@@ -31,6 +33,7 @@ public:
 
     ShaderProgram(ShaderProgram &&other) : m_name(other.m_name),
     m_vertexBuffer(other.m_vertexBuffer),
+    m_normalBuffer(other.m_normalBuffer),
     m_elementBuffer(other.m_elementBuffer),
     m_program(other.m_program),
     m_numElements(other.m_numElements),
@@ -49,6 +52,7 @@ public:
             Cleanup();
             // gros bordel
             std::swap(m_vertexBuffer, other.m_vertexBuffer);
+            std::swap(m_normalBuffer, other.m_normalBuffer);
             std::swap(m_elementBuffer, other.m_elementBuffer);
             std::swap(m_program, other.m_program);
             m_viewMatrix = other.m_viewMatrix;
@@ -72,6 +76,8 @@ private:
     std::string m_name;
 
     GLuint m_vertexBuffer = 0;
+
+    GLuint m_normalBuffer = 0;
 
     GLuint m_elementBuffer = 0;
 

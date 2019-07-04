@@ -233,37 +233,37 @@ bool ParseSTLFile(const char *filename, std::vector<STLSolid_t> &solids)
     return ParseSTLBinary(target, solids);
 }
 
-static bool CompareNormalVertexToExisting(glm::vec3 &norm, glm::vec3 &vert,
-        std::vector<glm::vec3> &normals,
-        std::vector<glm::vec3> &vertices)
-{
-    for (int i=0; i<normals.size(); i++) {
-        if (!glm::all(glm::equal(norm, normals[i]))) {
-            continue;
-        }
-        if (glm::all(glm::equal(vert, vertices[i]))) {
-            return true;
-        }
-    }
-    return false;
-}
+// static bool CompareNormalVertexToExisting(glm::vec3 &norm, glm::vec3 &vert,
+//         std::vector<glm::vec3> &normals,
+//         std::vector<glm::vec3> &vertices)
+// {
+//     for (int i=0; i<normals.size(); i++) {
+//         if (!glm::all(glm::equal(norm, normals[i]))) {
+//             continue;
+//         }
+//         if (glm::all(glm::equal(vert, vertices[i]))) {
+//             return true;
+//         }
+//     }
+//     return false;
+// }
 
 bool ConvertSolidToNormalVertexElements(STLSolid_t &solid,
         std::vector<glm::vec3> &normals, std::vector<glm::vec3> &vertices,
-        std::vector<int> &elements)
+        std::vector<unsigned short> &elements)
 {
-    int numElements = 0;
+    unsigned short numElements = 0;
     for (int i=0; i<solid.facets.size(); i++) {
         for (int j=0; j<3; j++) {
-            bool match = CompareNormalVertexToExisting(solid.facets[i].normal,
-                    solid.facets[i].vertices[j], normals, vertices);
-            if (!match) {
+            // bool match = CompareNormalVertexToExisting(solid.facets[i].normal,
+            //        solid.facets[i].vertices[j], normals, vertices);
+            // if (!match) {
                 elements.push_back(numElements++);
                 normals.push_back(solid.facets[i].normal);
                 vertices.push_back(solid.facets[i].vertices[j]);
                 continue;
-            }
-            elements.push_back((i*3)+j);
+            // }
+            elements.push_back((unsigned short)(i*3)+j);
         }
     }
     return true;
