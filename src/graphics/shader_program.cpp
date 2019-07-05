@@ -62,6 +62,12 @@ void ShaderProgram::SetModelMatrix(glm::mat4 &model)
     UpdateVertexArray();
 }
 
+void ShaderProgram::RotateModelMatrix(float angleRadians, glm::vec3 up)
+{
+    m_modelMatrix = glm::rotate(m_modelMatrix, angleRadians, up);
+    UpdateVertexArray();
+}
+
 void ShaderProgram::SetProjectionMatrix(glm::mat4 &projection)
 {
     m_projectionMatrix = projection;
@@ -140,6 +146,7 @@ void ShaderProgram::UpdateVertexArray() {
         glUniformMatrix4fv(matUniform, 1, GL_FALSE,
                 glm::value_ptr(m_projectionMatrix));
     }
+    glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 }
 
@@ -154,7 +161,7 @@ void ShaderProgram::Render()
         Warning("Attempted to render shader with 0 elements '%s'",
                 m_name.c_str());
     }
-    
+
     glUseProgram(m_program);
     glBindVertexArray(m_vertexArray);
     glDrawElements(GL_TRIANGLES, m_numElements, GL_UNSIGNED_INT, (void *)0);
@@ -170,6 +177,7 @@ ShaderProgram::~ShaderProgram()
 
 void ShaderProgram::Cleanup()
 {
+    // It is safe to call any glDelete function on 0
     m_viewMatrix = glm::mat4(1.0f);
     m_modelMatrix = glm::mat4(1.0f);
     m_projectionMatrix = glm::mat4(1.0f);
@@ -182,4 +190,49 @@ void ShaderProgram::Cleanup()
     m_elementBuffer = 0;
     glDeleteVertexArrays(1, &m_vertexArray);
     m_vertexArray = 0;
+}
+
+ShaderProgram& ShaderProgram::operator=(ShaderProgram &&other)
+{
+    if (this != &other) {
+        Cleanup();
+        // gros bordel
+        // When a move is made of the program OpenGL
+        // references need to be set to 0 before a
+        // destructor is called on the `other`
+        std::swap(m_vertexArray, other.m_vertexArray);
+        std::swap(m_vertexBuffer, other.m_vertexBuffer);
+        std::swap(m_normalBuffer, other.m_normalBuffer);
+        std::swap(m_elementBuffer, other.m_elementBuffer);
+        std::swap(m_program, other.m_program);
+        m_viewMatrix = other.m_viewMatrix;
+        m_projectionMatrix = other.m_projectionMatrix;
+        m_modelMatrix = other.m_modelMatrix;
+        m_numElements = other.m_numElements;
+        m_name = other.m_name;
+    }
+    return *this;
+}
+
+ShaderProgram::ShaderProgram(ShaderProgram &&other) : m_name(other.m_name),
+m_vertexArray(other.m_vertexArray),
+m_vertexBuffer(other.m_vertexBuffer),
+m_normalBuffer(other.m_normalBuffer),
+m_elementBuffer(other.m_elementBuffer),
+m_program(other.m_program),
+m_numElements(other.m_numElements),
+m_viewMatrix(other.m_viewMatrix),
+m_projectionMatrix(other.m_projectionMatrix),
+m_modelMatrix(other.m_modelMatrix)
+{
+    // Set new ShaderProgram to have
+    // references to the OpenGL buffers and program
+    // and unset GLuint references on `other` so that
+    // when Cleanup() is called in destructor our
+    // program and buffers won't be destroyed
+    other.m_vertexBuffer = 0;
+    other.m_elementBuffer = 0;
+    other.m_program = 0;
+    other.m_vertexArray = 0;
+    other.m_normalBuffer = 0;
 }

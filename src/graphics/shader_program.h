@@ -18,6 +18,8 @@ public:
 
     void SetModelMatrix(glm::mat4 &model);
 
+    void RotateModelMatrix(float angleRadians, glm::vec3 up);
+
     void SetViewMatrix(glm::mat4 &view);
 
     void SetProjectionMatrix(glm::mat4 &projection);
@@ -28,43 +30,13 @@ public:
 
     void Render();
 
+    // Copies cannot be made of this object
     ShaderProgram(const ShaderProgram &) = delete;
-    ShaderProgram &operator=(const ShaderProgram &) = delete;
+    ShaderProgram& operator=(const ShaderProgram &) = delete;
 
-    ShaderProgram(ShaderProgram &&other) : m_name(other.m_name),
-    m_vertexArray(other.m_vertexArray),
-    m_vertexBuffer(other.m_vertexBuffer),
-    m_normalBuffer(other.m_normalBuffer),
-    m_elementBuffer(other.m_elementBuffer),
-    m_program(other.m_program),
-    m_numElements(other.m_numElements),
-    m_viewMatrix(other.m_viewMatrix),
-    m_projectionMatrix(other.m_projectionMatrix),
-    m_modelMatrix(other.m_modelMatrix)
-    {
-        other.m_vertexBuffer = 0;
-        other.m_elementBuffer = 0;
-        other.m_program = 0;
-    }
-
-    ShaderProgram &operator=(ShaderProgram &&other)
-    {
-        if (this != &other) {
-            Cleanup();
-            // gros bordel
-            std::swap(m_vertexArray, other.m_vertexArray);
-            std::swap(m_vertexBuffer, other.m_vertexBuffer);
-            std::swap(m_normalBuffer, other.m_normalBuffer);
-            std::swap(m_elementBuffer, other.m_elementBuffer);
-            std::swap(m_program, other.m_program);
-            m_viewMatrix = other.m_viewMatrix;
-            m_projectionMatrix = other.m_projectionMatrix;
-            m_modelMatrix = other.m_modelMatrix;
-            m_numElements = other.m_numElements;
-            m_name = other.m_name;
-        }
-        return *this;
-    }
+    // Moves are allowed
+    ShaderProgram(ShaderProgram &&other);
+    ShaderProgram& operator=(ShaderProgram &&other);
 
     ~ShaderProgram();
 

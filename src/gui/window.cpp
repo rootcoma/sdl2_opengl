@@ -89,6 +89,9 @@ static bool SetGLAttributes()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    //glDepthFunc(GL_ALWAYS);
 
     return true;
 }
@@ -100,7 +103,7 @@ void SwapBuffer()
 
 void ClearDepthBuffer()
 {
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
 static void ClearColorBuffer()
