@@ -105,7 +105,7 @@ void ClearDepthBuffer()
 
 static void ClearColorBuffer()
 {
-    glClearColor(1.0, 1.0, 0.8, 1.0);
+    glClearColor(0.5, 0.5, 0.5, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 }
 

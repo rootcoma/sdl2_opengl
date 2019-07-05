@@ -16,13 +16,15 @@ ShaderProgram::ShaderProgram(const char *name)
     m_vertexBuffer = 0;
     m_elementBuffer = 0;
 }
-
+// GL_STATIC_DRAW: the data will most likely not change at all or very rarely.
+// GL_DYNAMIC_DRAW: the data is likely to change a lot.
+// GL_STREAM_DRAW: the data will change every time it is drawn.
 GLuint ShaderProgram::CreateBuffer(GLenum type, void *data, GLsizei size, GLenum storageHint)
 {
     GLuint buffer;
     glGenBuffersARB(1, &buffer);
     glBindBufferARB(type, buffer);
-    glBufferDataARB(type, size, data, storageHint); //GL_STATIC_DRAW
+    glBufferDataARB(type, size, data, storageHint);
     return buffer;
 }
 
@@ -30,6 +32,7 @@ void ShaderProgram::SetVertexBuffer(void *data, GLsizei size, GLenum storageHint
 {
     glDeleteBuffers(1, &m_vertexBuffer);
     m_vertexBuffer = CreateBuffer(GL_ARRAY_BUFFER, data, size, storageHint);
+    UpdateVertexArray();
 }
 
 void ShaderProgram::SetElementBuffer(int num, void *data, GLsizei size, GLenum storageHint)
@@ -37,27 +40,32 @@ void ShaderProgram::SetElementBuffer(int num, void *data, GLsizei size, GLenum s
     glDeleteBuffers(1, &m_elementBuffer);
     m_numElements = num;
     m_elementBuffer = CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, data, size, storageHint);
+    UpdateVertexArray();
 }
 
 void ShaderProgram::SetNormalBuffer(void *data, GLsizei size, GLenum storageHint)
 {
     glDeleteBuffers(1, &m_normalBuffer);
     m_normalBuffer = CreateBuffer(GL_ARRAY_BUFFER, data, size, storageHint);
+    UpdateVertexArray();
 }
 
 void ShaderProgram::SetViewMatrix(glm::mat4 &view)
 {
     m_viewMatrix = view;
+    UpdateVertexArray();
 }
 
 void ShaderProgram::SetModelMatrix(glm::mat4 &model)
 {
     m_modelMatrix = model;
+    UpdateVertexArray();
 }
 
 void ShaderProgram::SetProjectionMatrix(glm::mat4 &projection)
 {
     m_projectionMatrix = projection;
+    UpdateVertexArray();
 }
 
 bool ShaderProgram::LoadShaderFromFile(const char* filename, GLenum type)
@@ -94,34 +102,29 @@ bool ShaderProgram::LoadFragmentShaderFromFile(const char* filename)
     return LoadShaderFromFile(filename, GL_FRAGMENT_SHADER);
 }
 
-void ShaderProgram::Render()
-{
-    if (m_program == 0) {
-        Warning("Attempted to render uninitialized shader '%s'",
-                m_name.c_str());
+void ShaderProgram::UpdateVertexArray() {
+    if (!m_program) {
+        Warning("Tried to update vertex array without program");
         return;
     }
-    if (m_numElements == 0) {
-        Warning("Attempted to render shader with 0 elements '%s'",
-                m_name.c_str());
-    }
     glUseProgram(m_program);
+    if (m_vertexArray == 0) {
+        glGenVertexArrays(1, &m_vertexArray);
+    }
+    glBindVertexArray(m_vertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
     glVertexAttribPointerARB(
             glGetAttribLocationARB(m_program, "verts"),
-            3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*3, (void *)0);
+            3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*3, (void *)0);
     glEnableVertexAttribArrayARB(
             glGetAttribLocationARB(m_program, "verts"));
-
     glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
     glVertexAttribPointerARB(
             glGetAttribLocationARB(m_program, "normal"),
-            3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*3, (void *)0);
+            3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*3, (void *)0);
     glEnableVertexAttribArrayARB(
             glGetAttribLocationARB(m_program, "normal"));
-
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBuffer);
-    glDrawElements(GL_TRIANGLES, m_numElements, GL_UNSIGNED_INT, (void *)0);
     GLint matUniform = glGetUniformLocationARB(m_program, "model");
     if (matUniform > -1) {
         glUniformMatrix4fv(matUniform, 1, GL_FALSE,
@@ -137,6 +140,26 @@ void ShaderProgram::Render()
         glUniformMatrix4fv(matUniform, 1, GL_FALSE,
                 glm::value_ptr(m_projectionMatrix));
     }
+    glBindVertexArray(0);
+}
+
+void ShaderProgram::Render()
+{
+    if (m_program == 0) {
+        Warning("Attempted to render uninitialized shader '%s'",
+                m_name.c_str());
+        return;
+    }
+    if (m_numElements == 0) {
+        Warning("Attempted to render shader with 0 elements '%s'",
+                m_name.c_str());
+    }
+    
+    glUseProgram(m_program);
+    glBindVertexArray(m_vertexArray);
+    glDrawElements(GL_TRIANGLES, m_numElements, GL_UNSIGNED_INT, (void *)0);
+    glBindVertexArray(0);
+
 }
 
 ShaderProgram::~ShaderProgram()
@@ -157,4 +180,6 @@ void ShaderProgram::Cleanup()
     m_vertexBuffer = 0;
     glDeleteBuffers(1, &m_elementBuffer);
     m_elementBuffer = 0;
+    glDeleteVertexArrays(1, &m_vertexArray);
+    m_vertexArray = 0;
 }

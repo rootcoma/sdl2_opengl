@@ -39,12 +39,12 @@ static std::vector<ShaderProgram> shaderPrograms;
 static std::vector<STLSolid_t> allSolids;
 
 static glm::mat4 viewMatrix = glm::lookAt(
-        glm::vec3(-10, 10, -70),
-        glm::vec3(0, 0, 0),
-        glm::vec3(0, 1, 0)
+        glm::vec3(0, 0, -70), // Camera vec3
+        glm::vec3(0, 0, 0),   // Look at vec3
+        glm::vec3(0, 1, 0)    // Normal (up) vec3
     );
 
-static glm::mat4 projectionMatrix = glm::ortho(-40.0f, 40.0f, -40.0f, 40.0f, 0.0f, 300.0f);
+static glm::mat4 projectionMatrix = glm::ortho(-64.0f, 64.0f, -48.0f, 48.0f, 0.0f, 300.0f);
 
 static glm::mat4 modelMatrix = glm::mat4(1.0f);
 

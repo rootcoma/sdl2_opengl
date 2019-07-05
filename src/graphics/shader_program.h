@@ -32,6 +32,7 @@ public:
     ShaderProgram &operator=(const ShaderProgram &) = delete;
 
     ShaderProgram(ShaderProgram &&other) : m_name(other.m_name),
+    m_vertexArray(other.m_vertexArray),
     m_vertexBuffer(other.m_vertexBuffer),
     m_normalBuffer(other.m_normalBuffer),
     m_elementBuffer(other.m_elementBuffer),
@@ -51,6 +52,7 @@ public:
         if (this != &other) {
             Cleanup();
             // gros bordel
+            std::swap(m_vertexArray, other.m_vertexArray);
             std::swap(m_vertexBuffer, other.m_vertexBuffer);
             std::swap(m_normalBuffer, other.m_normalBuffer);
             std::swap(m_elementBuffer, other.m_elementBuffer);
@@ -67,6 +69,8 @@ public:
     ~ShaderProgram();
 
 private:
+    void UpdateVertexArray();
+
     GLuint CreateBuffer(GLenum type, void *data, GLsizei size, GLenum storageHint);
 
     bool LoadShaderFromFile(const char* filename, GLenum type);
@@ -74,6 +78,8 @@ private:
     void Cleanup();
 
     std::string m_name;
+
+    GLuint m_vertexArray = 0;
 
     GLuint m_vertexBuffer = 0;
 
