@@ -6,7 +6,7 @@
 #pragma clang diagnostic pop
 #include <GL/glew.h>
 #include <limits>
-#include "log.h"
+#include "util/log.h"
 
 static inline bool CompileShader(GLenum shaderObject, const std::string &src,
         const Sint64 &len)

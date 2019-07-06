@@ -4,86 +4,35 @@
 #include <memory>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 #include <GL/glew.h>
 #include "graphics/shader_program.h"
 #include "util/log.h"
 #include "graphics/stl_parser.h"
+#include "graphics/camera.h"
 
-// static const GLfloat fullscreenVertices[] = {
-//     -1.0f, -1.0f, -1.0f, // bottom left
-//      1.0f, -1.0f, -1.0f, // bottom right
-//     -1.0f,  1.0f, -1.0f, // top left
-//      1.0f,  1.0f, -1.0f, // top right
-// };
-
-// static const GLuint fullscreenElements[] = {
-//     0, 1, 2, 2, 1, 3,
-// };
+#define FOV 45.0f
+#define ASPECT_RATIO (16.0f/9.0f)
 
 static const char *models[] = {
         //"models/block100.stl",
         //"models/bottle.stl",
-        //"models/cube.stl",
+        "models/cube.stl",
         //"models/humanoid.stl",
         //"models/liver.stl",
         //"models/magnolia.stl",
         //"models/space_invader_magnet.stl",
-        //"models/sphere.stl",
+        "models/sphere.stl",
         //"models/tiler_3d.stl",
-        "models/Suzanne.stl",
+        //"models/Suzanne.stl",
+        //"models/unit_circle_2x2.stl",
 };
 
 static std::vector<ShaderProgram> shaderPrograms;
-
 static std::vector<STLSolid_t> allSolids;
-
-static glm::mat4 viewMatrix = glm::lookAt(
-        glm::vec3(0, 0, -130), // Camera vec3
-        glm::vec3(0, 0, 0),   // Look at vec3
-        glm::vec3(0, 1, 0)    // Normal (up) vec3
-    );
-
-static glm::mat4 projectionMatrix = glm::ortho(-64.0f, 64.0f, -48.0f, 48.0f, 0.0f, 300.0f);
-
+static CameraView camera;
+static glm::mat4 projectionMatrix = glm::perspective(glm::radians(FOV), ASPECT_RATIO, 0.1f, 1000.0f);
 static glm::mat4 modelMatrix = glm::mat4(1.0f);
-
-// static bool CreateFullscreenShaderProgram()
-// {
-//     shaderPrograms.push_back(ShaderProgram("background"));
-//     ShaderProgram *shader = &shaderPrograms[shaderPrograms.size()-1];
-//     if (!shader->LoadFragmentShaderFromFile("shaders/background.frs")) {
-//         return false;
-//     }
-//     if (!shader->LoadVertexShaderFromFile("shaders/background.vs")) {
-//         return false;
-//     }
-//     shader->SetVertexBuffer((void *)fullscreenVertices,
-//             sizeof(fullscreenVertices), GL_STATIC_DRAW);
-//     shader->SetElementBuffer(6, (void *)fullscreenElements,
-//             sizeof(fullscreenElements), GL_STATIC_DRAW);
-//     Debug("Set up fullscreen shader object");
-//     return true;
-// }
-
-// static bool CreateBoardShaderProgram()
-// {
-//     shaderPrograms.push_back(ShaderProgram("board"));
-//     ShaderProgram *shader = &shaderPrograms[shaderPrograms.size()-1];
-//     if (!shader->LoadFragmentShaderFromFile("shaders/board.frs")) {
-//         return false;
-//     }
-//     if (!shader->LoadVertexShaderFromFile("shaders/board.vs")) {
-//         return false;
-//     }
-//     shader->SetVertexBuffer((void *)fullscreenVertices,
-//             sizeof(fullscreenVertices), GL_STATIC_DRAW);
-//     shader->SetElementBuffer(6, (void *)fullscreenElements,
-//             sizeof(fullscreenElements), GL_STATIC_DRAW);
-//     Debug("Set up board shader program");
-//     return true;
-// }
 
 static bool CreateModelShaderProgram(const char *name,
         std::vector<glm::vec3> &vertices, std::vector<GLuint> &elements,
@@ -102,14 +51,19 @@ static bool CreateModelShaderProgram(const char *name,
                 vertices.size(), normals.size());
         return false;
     }
-    size_t numFloats = vertices.size() * 3;
-    shader->SetVertexBuffer((void *)&vertices[0], sizeof(GLfloat)*numFloats,
-            GL_STATIC_DRAW);
-    shader->SetNormalBuffer((void *)&normals[0], sizeof(GLfloat)*numFloats,
+
+    size_t numFloats = vertices.size() * 6; // vec3 (vertex) + vec3 (nromal)
+    std::vector<glm::vec3> combinedVertexInformation;
+    for (int i=0; i<vertices.size(); i++) {
+        combinedVertexInformation.push_back(vertices[i]);
+        combinedVertexInformation.push_back(normals[i]);
+    }
+    shader->SetVertexBuffer((void *)&combinedVertexInformation[0], sizeof(GLfloat)*numFloats,
             GL_STATIC_DRAW);
     shader->SetElementBuffer(elements.size(), (void *)&elements[0],
             sizeof(GLuint)*elements.size(), GL_STATIC_DRAW);
-    shader->SetViewMatrix(viewMatrix);
+    glm::mat4 view = camera.Update();
+    shader->SetViewMatrix(view);
 
     shader->SetModelMatrix(modelMatrix);
 
@@ -136,22 +90,19 @@ static bool ParseSTLModel(const char* filename, std::vector<STLSolid_t> &solids)
 
 void SceneRender()
 {
+    glm::mat4 cam = camera.Update();
+    float fun = 0.001f;
     for (auto it=shaderPrograms.begin(); it!=shaderPrograms.end(); it++) {
-        it->RotateModelMatrix(0.01f, glm::vec3(0, 1, 0));
+        it->RotateModelMatrix(fun, glm::vec3(0, 1, 0));
+        it->RotateModelMatrix(-fun*0.3f, glm::vec3(1, 0, 0));
+        it->SetViewMatrix(cam);
         it->Render();
+        fun = -fun;
     }
 }
 
 bool SceneInit()
 {
-
-    // if (!CreateFullscreenShaderProgram()) {
-    //     return false;
-    // }
-    // if (!CreateBoardShaderProgram()) {
-    //     return false;
-    // }
-
     for (int i=0; i<sizeof(models)/sizeof(const char *); i++) {
         if (!ParseSTLModel(models[i], allSolids)) {
             return false;
@@ -161,6 +112,8 @@ bool SceneInit()
         std::vector<glm::vec3> normals;
         std::vector<glm::vec3> vertices;
         std::vector<GLuint> elements;
+
+
         ConvertSolidToNormalVertexElements(allSolids[i], normals, vertices,
                 elements);
         Debug("normals.size(): %lu, vertices.size(): %lu, elements.size(): %lu",
@@ -171,4 +124,14 @@ bool SceneInit()
     }
 
     return true;
+}
+
+void KeyboardInput(int code, int state)
+{
+    camera.KeyboardInput(code, state);
+}
+
+void MouseMotion(int deltaX, int deltaY)
+{
+    camera.MouseMotion(deltaX, deltaY);
 }

@@ -2,7 +2,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
-#include "util/glutil.h"
+#include "graphics/glutil.h"
 #include "util/file.h"
 
 ShaderProgram::ShaderProgram(const char *name)
@@ -40,13 +40,6 @@ void ShaderProgram::SetElementBuffer(int num, void *data, GLsizei size, GLenum s
     glDeleteBuffers(1, &m_elementBuffer);
     m_numElements = num;
     m_elementBuffer = CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, data, size, storageHint);
-    UpdateVertexArray();
-}
-
-void ShaderProgram::SetNormalBuffer(void *data, GLsizei size, GLenum storageHint)
-{
-    glDeleteBuffers(1, &m_normalBuffer);
-    m_normalBuffer = CreateBuffer(GL_ARRAY_BUFFER, data, size, storageHint);
     UpdateVertexArray();
 }
 
@@ -119,17 +112,17 @@ void ShaderProgram::UpdateVertexArray() {
     }
     glBindVertexArray(m_vertexArray);
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
+
     glVertexAttribPointerARB(
             glGetAttribLocationARB(m_program, "verts"),
-            3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*3, (void *)0);
+            3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*6, (void *)0);
     glEnableVertexAttribArrayARB(
             glGetAttribLocationARB(m_program, "verts"));
-    glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
-    glVertexAttribPointerARB(
-            glGetAttribLocationARB(m_program, "normal"),
-            3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*3, (void *)0);
+    glVertexAttribPointerARB(glGetAttribLocationARB(m_program, "normal"),
+            3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*6, (void *)(sizeof(GLfloat)*3));
     glEnableVertexAttribArrayARB(
             glGetAttribLocationARB(m_program, "normal"));
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBuffer);
     GLint matUniform = glGetUniformLocationARB(m_program, "model");
     if (matUniform > -1) {
@@ -146,6 +139,7 @@ void ShaderProgram::UpdateVertexArray() {
         glUniformMatrix4fv(matUniform, 1, GL_FALSE,
                 glm::value_ptr(m_projectionMatrix));
     }
+
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 }
@@ -202,7 +196,6 @@ ShaderProgram& ShaderProgram::operator=(ShaderProgram &&other)
         // destructor is called on the `other`
         std::swap(m_vertexArray, other.m_vertexArray);
         std::swap(m_vertexBuffer, other.m_vertexBuffer);
-        std::swap(m_normalBuffer, other.m_normalBuffer);
         std::swap(m_elementBuffer, other.m_elementBuffer);
         std::swap(m_program, other.m_program);
         m_viewMatrix = other.m_viewMatrix;
@@ -217,7 +210,6 @@ ShaderProgram& ShaderProgram::operator=(ShaderProgram &&other)
 ShaderProgram::ShaderProgram(ShaderProgram &&other) : m_name(other.m_name),
 m_vertexArray(other.m_vertexArray),
 m_vertexBuffer(other.m_vertexBuffer),
-m_normalBuffer(other.m_normalBuffer),
 m_elementBuffer(other.m_elementBuffer),
 m_program(other.m_program),
 m_numElements(other.m_numElements),
@@ -234,5 +226,4 @@ m_modelMatrix(other.m_modelMatrix)
     other.m_elementBuffer = 0;
     other.m_program = 0;
     other.m_vertexArray = 0;
-    other.m_normalBuffer = 0;
 }

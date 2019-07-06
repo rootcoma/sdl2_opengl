@@ -22,8 +22,7 @@ parameter and returning bool (std::optional defines more expressive semantics fo
 precisely this kind of scenario)
 */
 
-
-#define STL_PARSER_MAX_FACETS 0x100000
+//#define STL_PARSER_MAX_FACETS 0x100000
 // Note: STLFacet_t is not aligned and STL_FACET_SIZE
 //       is used to iterate through facets in binary
 //       files
@@ -42,7 +41,8 @@ static bool ReadVec3FromString(std::string &str, glm::vec3 &vec)
                 Warning("Failed to get vertex%d for vector", i);
                 return false;
             }
-        } while (valueStr[0] == '\0');
+        } while (valueStr[0] == '\0'); // this skips multiple spaces
+                                       // until a non-null str is found
         try {
             trim(valueStr);
             vals[i] = std::stof(valueStr);
@@ -231,7 +231,7 @@ bool ParseSTLFile(const char *filename, std::vector<STLSolid_t> &solids)
         Info("Parsing Ascii STL file '%s'", filename);
         return ParseSTLAscii(target, solids);
     }
-    Info("Parsing Binary STL file", filename);
+    Info("Parsing Binary STL file '%s'", filename);
     return ParseSTLBinary(target, solids);
 }
 

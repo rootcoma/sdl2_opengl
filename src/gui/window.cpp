@@ -92,8 +92,17 @@ static bool SetGLAttributes()
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     //glDepthFunc(GL_ALWAYS);
-
+    //SetWireframe(true);
     return true;
+}
+
+void SetWireframe(bool wireframe)
+{
+    if (wireframe) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        return;
+    }
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void SwapBuffer()
@@ -103,7 +112,7 @@ void SwapBuffer()
 
 void ClearDepthBuffer()
 {
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 static void ClearColorBuffer()

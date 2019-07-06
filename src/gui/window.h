@@ -5,8 +5,8 @@
 #include <SDL.h>
 #pragma clang diagnostic pop
 
-#define DEFAULT_WINDOW_WIDTH 640
-#define DEFAULT_WINDOW_HEIGHT 480
+#define DEFAULT_WINDOW_WIDTH 1280
+#define DEFAULT_WINDOW_HEIGHT 720
 
 SDL_GLContext GetGLContext();
 
@@ -21,5 +21,7 @@ bool CreateWindow();
 void DestroyWindow();
 
 void WindowResize(Sint32 newWidth, Sint32 newHeight);
+
+void SetWireframe(bool wireframe);
 
 #endif

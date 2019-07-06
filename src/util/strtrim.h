@@ -3,6 +3,7 @@
 #include <algorithm> // std::find_if
 #include <cctype> // std::isspace
 // Ripped from https://stackoverflow.com/questions/216823/
+// Thanks!
 
 // trim from start (in place)
 static inline void ltrim(std::string &s) {

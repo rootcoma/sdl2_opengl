@@ -8,6 +8,7 @@
 void RunEventLoop()
 {
     SDL_Event event;
+    float oldx = 0.0f, oldy = 0.0f;
     while (true) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
@@ -22,6 +23,28 @@ void RunEventLoop()
                 switch (event.key.keysym.sym) {
                 case SDLK_ESCAPE:
                     return;
+                default:
+                    KeyboardInput(event.key.keysym.scancode, SDL_KEYDOWN);
+                    break;
+                }
+            } else if (event.type == SDL_KEYUP) {
+                KeyboardInput(event.key.keysym.scancode, SDL_KEYUP);
+            } else if (event.type == SDL_MOUSEBUTTONDOWN) {
+                // if (event.button.button & SDL_BUTTON_LMASK) {
+                SDL_ShowCursor(SDL_FALSE);
+                SDL_SetRelativeMouseMode(SDL_TRUE);
+                oldx = event.button.x;
+                oldy = event.button.y;
+                // }
+            } else if (event.type == SDL_MOUSEBUTTONUP) {
+                // if (event.button.button & SDL_BUTTON_LMASK) {
+                SDL_ShowCursor(SDL_TRUE);
+                SDL_SetRelativeMouseMode(SDL_FALSE);
+                SDL_WarpMouseInWindow(GetWindow(), oldx, oldy);
+                // }
+            } else if (event.type == SDL_MOUSEMOTION) {
+                if(event.motion.state) { // & SDL_BUTTON_LMASK
+                    MouseMotion(event.motion.xrel, event.motion.yrel);
                 }
             }
         }

@@ -7,7 +7,8 @@ src\gui\window.cpp ^
 src\gui\event.cpp ^
 src\scene.cpp ^
 src\graphics\shader_program.cpp ^
-src\graphics\stl_parser.cpp
+src\graphics\stl_parser.cpp ^
+src\graphics\camera.cpp
 
 set CXX_FLAGS=-m32 -O2 -Wall -Werror -std=c++14
 

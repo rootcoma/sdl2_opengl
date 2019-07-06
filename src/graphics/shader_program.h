@@ -6,12 +6,12 @@
 
 class ShaderProgram
 {
+    // Wraps an opengl shader. With parts graciously taken from
+    // https://www.khronos.org/opengl/wiki/Common_Mistakes#RAII_and_hidden_destructor_calls
 public:
     ShaderProgram(const char *name);
 
     void SetVertexBuffer(void *data, GLsizei size, GLenum storageHint);
-
-    void SetNormalBuffer(void *data, GLsizei size, GLenum storageHint);
 
     void SetElementBuffer(int numElements, void *data,
             GLsizei size, GLenum storageHint);
@@ -30,7 +30,9 @@ public:
 
     void Render();
 
-    // Copies cannot be made of this object
+    // Sans default constructor
+    ShaderProgram() = delete;
+    // Copies are not allowed
     ShaderProgram(const ShaderProgram &) = delete;
     ShaderProgram& operator=(const ShaderProgram &) = delete;
 
@@ -54,8 +56,6 @@ private:
     GLuint m_vertexArray = 0;
 
     GLuint m_vertexBuffer = 0;
-
-    GLuint m_normalBuffer = 0;
 
     GLuint m_elementBuffer = 0;
 
