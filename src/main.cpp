@@ -10,10 +10,17 @@
 int main(int argc, char **argv)
 {
     Success("Hello, World!");
-    CreateWindow();
-    SceneInit();
+    if (!CreateWindow()) {
+        Error("Failed to create a window, "
+            "that's going to be a hinderance.");
+        return -1;
+    }
+    if(!SceneInit()) {
+        Error("Failed to initialize the scene");
+        return -2;
+    }
     RunEventLoop();
     DestroyWindow();
     Success("Bye!");
-    return 0;
+    return EXIT_SUCCESS;
 }

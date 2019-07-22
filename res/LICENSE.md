@@ -1,3 +1,4 @@
+Copied from https://people.sc.fsu.edu/~jburkardt/txt/gnu_lgpl.txt
            GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 

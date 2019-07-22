@@ -1,17 +1,14 @@
 #ifndef GLUTIL_H
 #define GLUTIL_H
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpragma-pack"
-#include <SDL.h>
-#pragma clang diagnostic pop
+#include <cstdint>
 #include <GL/glew.h>
 #include <limits>
 #include "util/log.h"
 
 static inline bool CompileShader(GLenum shaderObject, const std::string &src,
-        const Sint64 &len)
+        const int64_t &len)
 {
-    // Sint64 = 64bit
+    // int64_t = 64bit
     // GLint >=32bit
     GLint filesizeMax = std::numeric_limits<GLint>::max();
     if (len >= filesizeMax) {

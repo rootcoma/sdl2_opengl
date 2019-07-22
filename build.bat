@@ -7,16 +7,22 @@ src\gui\window.cpp ^
 src\gui\event.cpp ^
 src\scene.cpp ^
 src\graphics\shader_program.cpp ^
-src\graphics\stl_parser.cpp ^
+src\util\stl_parser.cpp ^
 src\graphics\camera.cpp
 
-set CXX_FLAGS=-m32 -O2 -Wall -Werror -std=c++14
+set CXX_FLAGS=^
+-m32 ^
+-O2 ^
+-Wall ^
+-Werror ^
+-std=c++14
 
 set INC=^
 -Isrc ^
 -Ilib\glew-2.1.0\include ^
 -Ilib\glm-0.9.9.5 ^
--Ilib\SDL2-2.0.9\include
+-Ilib\SDL2-2.0.9\include ^
+-Ilib\tinyobjloader-1.0.7
 
 set LIB=^
 -Llib\SDL2-2.0.9\lib\x86 ^
@@ -32,10 +38,10 @@ set LINK=^
 
 @ECHO on
 mkdir build
+mkdir build\models
 copy lib\SDL2-2.0.9\lib\x86\SDL2.dll build
 copy lib\glew-2.1.0\bin\Release\Win32\glew32.dll build
-mkdir build\models
-copy res\*.stl build\models
+xcopy res\* build\models /E /Y
 mkdir build\shaders
 copy /Y src\shaders\* build\shaders
 clang++ -Xclang -flto-visibility-public-std -o build/%PROG_NAME% %CXX_FLAGS% %INC% %LIB% %LINK% %SRC_FILES% -Xlinker /subsystem:console

@@ -6,6 +6,8 @@ SDL_Window *window = NULL;
 
 SDL_GLContext glContext = NULL;
 
+std::pair<uint32_t, uint32_t> windowDimensions = {0, 0};
+
 SDL_GLContext GetGLContext()
 {
     return glContext;
@@ -14,6 +16,22 @@ SDL_GLContext GetGLContext()
 SDL_Window* GetWindow()
 {
     return window;
+}
+
+
+int32_t GetWindowWidth()
+{
+    return windowDimensions.first;
+}
+
+int32_t GetWindowHeight()
+{
+    return windowDimensions.second;
+}
+
+std::pair<int32_t, int32_t> GetWindowDimensions()
+{
+    return windowDimensions;
 }
 
 static void Fail(const char* msg)
@@ -36,6 +54,7 @@ static bool CreateSDLWindow()
     window = SDL_CreateWindow("sdl2", SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED, DEFAULT_WINDOW_WIDTH,
         DEFAULT_WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    windowDimensions = std::make_pair(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
     if (window == NULL) {
         Fail("Failed to create SDL2 window");
         return false;
@@ -78,7 +97,7 @@ static bool SetGLAttributes()
         Fail("Failed to set GL_DOUBLEBUFFER");
         return false;
     }
-    if (SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24)) {
+    if (SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32)) {
         Fail("Failed to set GL_DEPTH_SIZE");
         return false;
     }
@@ -128,10 +147,11 @@ void DestroyWindow()
     SDL_Quit();
 }
 
-void WindowResize(Sint32 newWidth, Sint32 newHeight)
+void WindowResize(int32_t newWidth, int32_t newHeight)
 {
     //Debug("window resized to %ld, %ld", newWidth, newHeight);
     glViewport(0, 0, (GLsizei)newWidth, (GLsizei)newHeight);
+    windowDimensions = std::make_pair(newWidth, newHeight);
 }
 
 bool CreateWindow()

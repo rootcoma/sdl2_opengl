@@ -1,3 +1,4 @@
+#include "event.h"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpragma-pack"
 #include "SDL.h"
@@ -17,6 +18,8 @@ void RunEventLoop()
                 switch (event.window.event) {
                 case SDL_WINDOWEVENT_SIZE_CHANGED:
                     WindowResize(event.window.data1,
+                        event.window.data2); // TODO: Consolidate resize funcs
+                    SceneWindowResize(event.window.data1,
                         event.window.data2);
                 }
             } else if (event.type == SDL_KEYDOWN) {

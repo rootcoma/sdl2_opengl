@@ -1,11 +1,16 @@
 #ifndef STL_FILEPARSER_H
 #define STL_FILEPARSER_H
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpragma-pack"
+#include "SDL.h"
+#pragma clang diagnostic pop
+#include <cstdint>
 #include <string>
 #include "util/log.h"
 
-static inline Sint64 ReadFile(const char* filename, std::string &target)
+static inline int64_t ReadFile(const char* filename, std::string &target)
 {
-    Sint64 len = -1;
+    int64_t len = -1;
     SDL_RWops *f = SDL_RWFromFile(filename, "rb");
     if (f == NULL) {
         Error("Could not open file '%s'", filename);
@@ -22,6 +27,12 @@ static inline Sint64 ReadFile(const char* filename, std::string &target)
 
     f->close(f);
     return len;
+}
+
+static inline std::string GetBaseDir(std::string filename)
+{
+    const auto pos = filename.find_last_of('/');
+    return filename.substr(0, pos+1);
 }
 
 #endif

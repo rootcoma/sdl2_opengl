@@ -3,9 +3,7 @@
 #include <cctype>
 #include "util/file.h"
 #include "util/strtrim.h"
-
 /*
-notes from the sah-gey:
 i strongly recommend using std::string_view here in place of strings/streams.
 taking input as a std::string_view (passed by value) allows both std::strings and
 string literals to be passed with minimal overhead (taking a std::string& can result
@@ -20,15 +18,23 @@ particular), while remaining efficient and relatively intuitive. you may also wa
 consider having this function return a std::optional<float> instead taking an output
 parameter and returning bool (std::optional defines more expressive semantics for
 precisely this kind of scenario)
-*/
 
-//#define STL_PARSER_MAX_FACETS 0x100000
+If the function taking strings always ends up making a copy of the string for whatever
+reason, consider taking an std::string instead. No, not a reference to one, take it by
+value. Then when you copy it, just std::move it instead. Doing it this way actually
+reduces the amount of copies. If the caller of the function decides they don't need the
+string anymore, they can std::move it into your function, and since your function also
+std::moves it, no copy of the string ever takes place. In all other cases, a copy
+would've taken place anyway, and you still only make 1 copy. Taking an
+std::string_view would've always made a copy in all cases.*/
+
 // Note: STLFacet_t is not aligned and STL_FACET_SIZE
 //       is used to iterate through facets in binary
 //       files
 #define STL_FACET_SIZE 0x32
+#define STL_MAX_FACETS_SIZE 0x100000
 
-static bool ReadVec3FromString(std::string &str, glm::vec3 &vec)
+static bool ReadVec3FromString(const std::string &str, glm::vec3 &vec)
 {
     //Success("vec3 string '%s'", str.c_str());
     // split the string into 3 floats
@@ -204,7 +210,7 @@ bool ParseSTLBinary(std::string &str, std::vector<STLSolid_t> &solids)
             facets = (internalSTLFacet_t *)&str[offset];
         }
         solids.push_back(solid);
-    } while (totalSize - offset > sizeof(STLSolid_t));
+    } while (totalSize - offset > sizeof(internalSTLSolid_t));
     Success("Finished parsing binary STL file");
     return true;
 }
@@ -235,20 +241,6 @@ bool ParseSTLFile(const char *filename, std::vector<STLSolid_t> &solids)
     return ParseSTLBinary(target, solids);
 }
 
-static int CompareNormalVertexToExisting(glm::vec3 &norm, glm::vec3 &vert,
-        std::vector<glm::vec3> &normals,
-        std::vector<glm::vec3> &vertices)
-{
-    for (int i=0; i<normals.size(); i++) {
-        if (!glm::all(glm::equal(norm, normals[i]))) {
-            continue;
-        }
-        if (glm::all(glm::equal(vert, vertices[i]))) {
-            return i;
-        }
-    }
-    return -1;
-}
 
 bool ConvertSolidToNormalVertexElements(STLSolid_t &solid,
         std::vector<glm::vec3> &normals, std::vector<glm::vec3> &vertices,
@@ -256,15 +248,9 @@ bool ConvertSolidToNormalVertexElements(STLSolid_t &solid,
 {
     for (int i=0; i<solid.facets.size(); i++) {
         for (int j=0; j<3; j++) {
-            int match = CompareNormalVertexToExisting(solid.facets[i].normal,
-                   solid.facets[i].vertices[j], normals, vertices);
-            if (match < 0) {
-                elements.push_back(normals.size());
-                normals.push_back(solid.facets[i].normal);
-                vertices.push_back(solid.facets[i].vertices[j]);
-                continue;
-            }
-            elements.push_back((GLuint)match);
+            elements.push_back(normals.size());
+            normals.push_back(solid.facets[i].normal);
+            vertices.push_back(solid.facets[i].vertices[j]);
         }
     }
     return true;
