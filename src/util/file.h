@@ -1,9 +1,6 @@
-#ifndef STL_FILEPARSER_H
-#define STL_FILEPARSER_H
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpragma-pack"
+#ifndef UTIL_STL_PARSER_H_
+#define UTIL_STL_PARSER_H_
 #include "SDL.h"
-#pragma clang diagnostic pop
 #include <cstdint>
 #include <string>
 #include "util/log.h"

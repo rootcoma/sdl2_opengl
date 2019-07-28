@@ -2,10 +2,7 @@
 #define WINDOW_H
 #include <utility>
 #include <cstdint>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpragma-pack"
 #include <SDL.h>
-#pragma clang diagnostic pop
 
 #define DEFAULT_WINDOW_WIDTH 1280
 #define DEFAULT_WINDOW_HEIGHT 720

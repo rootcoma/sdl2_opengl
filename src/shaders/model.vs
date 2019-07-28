@@ -1,4 +1,4 @@
-#version 330 core
+#version 130
 
 struct Material {
     sampler2D diffuseSampler;
@@ -48,6 +48,15 @@ in vec2 facetUV;
 out vec3 inFragPos;
 out vec3 inNormal;
 out vec2 inUV;
+
+mat4 inverse(mat4 src)
+{
+	mat3 m = transpose(mat3(src));
+	vec3 v = vec3(src[3]);
+	mat4 ret = mat4(m);
+	ret[3] = vec4(-m*v, 1.0);
+	return ret;
+}
 
 void main()
 {

@@ -1,10 +1,7 @@
 #ifndef STL_PARSER_H
 #define STL_PARSER_H
 #include <GL/glew.h>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpragma-pack"
 #include <SDL.h>
-#pragma clang diagnostic pop
 #include <vector>
 #include <array>
 #include <glm/glm.hpp>

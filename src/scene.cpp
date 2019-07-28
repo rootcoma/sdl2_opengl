@@ -327,7 +327,7 @@ static bool LoadObjModel(const char* filename)
 
     // Load any textures parsed
     std::string texFilename;
-    for (int i=0; i<materials.size(); i++) {
+    for (unsigned int i=0; i<materials.size(); i++) {
         if (materials[i].diffuse_texname.size() == 0) {
             continue;
         }
@@ -400,7 +400,7 @@ static bool LoadObjModel(const char* filename)
 
 bool SceneInit()
 {
-    for (int i=0; i<sizeof(models)/sizeof(const char *); i++) {
+    for (unsigned int i=0; i<sizeof(models)/sizeof(const char *); i++) {
         std::string extension = models[i];
         extension = extension.substr(extension.find_last_of("."));
         for(auto& c : extension) {

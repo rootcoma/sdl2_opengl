@@ -1,8 +1,5 @@
 #include "camera.h"
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpragma-pack"
 #include "SDL.h"
-#pragma clang diagnostic pop
 #include <glm/gtc/matrix_transform.hpp>
 
 

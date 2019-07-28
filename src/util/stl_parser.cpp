@@ -1,4 +1,5 @@
 #include "stl_parser.h"
+#include <cstring>
 #include <sstream>
 #include <cctype>
 #include "util/file.h"
@@ -195,7 +196,7 @@ bool ParseSTLBinary(std::string &str, std::vector<STLSolid_t> &solids)
         }
         //Debug("Solid has %ld Facets.", stlHeader->numFacets);
         internalSTLFacet_t *facets = (internalSTLFacet_t *)&str[offset];
-        for (int i=0; i<stlHeader->numFacets; i++) {
+        for (unsigned int i=0; i<stlHeader->numFacets; i++) {
             STLFacet_t tmpFacet;
             tmpFacet.normal = glm::vec3(facets[0].normal[0],
                     facets[0].normal[1], facets[0].normal[2]);
@@ -246,7 +247,7 @@ bool ConvertSolidToNormalVertexElements(STLSolid_t &solid,
         std::vector<glm::vec3> &normals, std::vector<glm::vec3> &vertices,
         std::vector<GLuint> &elements)
 {
-    for (int i=0; i<solid.facets.size(); i++) {
+    for (unsigned int i=0; i<solid.facets.size(); i++) {
         for (int j=0; j<3; j++) {
             elements.push_back(normals.size());
             normals.push_back(solid.facets[i].normal);

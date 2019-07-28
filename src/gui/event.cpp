@@ -1,8 +1,5 @@
 #include "event.h"
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpragma-pack"
 #include "SDL.h"
-#pragma clang diagnostic pop
 #include "window.h"
 #include "scene.h"
 

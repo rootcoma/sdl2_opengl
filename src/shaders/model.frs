@@ -1,4 +1,4 @@
-#version 330 core
+#version 130
 // https://learnopengl.com All lighting
 // is from these tutorials.
 
@@ -182,7 +182,7 @@ void main()
     vec3 ViewDir = normalize(cameraPosition - inFragPos);
 
     vec3 outcolor = vec3(0.0f);
-    for (unsigned int i=0; i<numLights; i++) {
+    for (int i=0; i<numLights; i++) {
         if (material.type == 0) {
             switch (lights[i].type) {
                 case 0:
