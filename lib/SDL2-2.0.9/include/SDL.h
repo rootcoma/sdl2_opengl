@@ -28,7 +28,10 @@
 
 #ifndef SDL_h_
 #define SDL_h_
-
+#ifdef _WIN32
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpragma-pack"
+#endif // _WIN32
 #include "SDL_main.h"
 #include "SDL_stdinc.h"
 #include "SDL_assert.h"
@@ -129,6 +132,10 @@ extern DECLSPEC void SDLCALL SDL_Quit(void);
 }
 #endif
 #include "close_code.h"
+
+#ifdef _WIN32
+#pragma clang diagnostic pop
+#endif // _WIN32
 
 #endif /* SDL_h_ */
 
